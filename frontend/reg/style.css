@@ -10,15 +10,25 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background-color: #f4f4f9;
     color: #333;
+    overflow: hidden; /* Скрыть полосы прокрутки */
+}
+
+.background-video {
+    position: absolute; /* Позиционирование абсолютно */
+    top: 0;
+    left: 0;
+    width: 100%; /* Занять всю ширину */
+    height: 100%; /* Занять всю высоту */
+    object-fit: cover; /* Изменение размера для заполнения контейнера */
+    z-index: -1; /* Поместить видео за содержимым */
 }
 
 .auth-container {
-    background-color: white;
+    background-color: rgba(255, 255, 255, 0.0); /* Полупрозрачный фон */
     padding: 40px;
     border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.0);
     width: 100%;
     max-width: 350px;
     display: flex;
@@ -30,7 +40,7 @@ body {
 .auth-container h1 {
     font-size: 24px;
     text-align: center;
-    color: #333;
+    color: #ffffff;
 }
 
 .auth-container form {
@@ -71,10 +81,11 @@ body {
 .auth-container p {
     text-align: center;
     margin-top: 10px;
+    color: #ffffff;
 }
 
 .auth-container a {
-    color: #4a90e2;
+    color: #357ab8;
     text-decoration: none;
     transition: color 0.3s ease;
 }

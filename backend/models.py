@@ -5,7 +5,7 @@ Base = declarative_base()
 
 class User(Base):
     __tablename__ = 'user'
-    __table_args__ = {'schema': 'users'}  # Укажите схему
+    __table_args__ = {'schema': 'users'}
 
     id = Column(Integer, primary_key=True)
     login = Column(String, nullable=False)
