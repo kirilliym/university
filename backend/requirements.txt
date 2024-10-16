@@ -1,2 +1,7 @@
 fastapi
 uvicorn
+sqlalchemy[asyncio]
+asyncpg
+psycopg2-binary
+passlib[bcrypt]
+python-jose
