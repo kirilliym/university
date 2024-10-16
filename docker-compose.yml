@@ -1,4 +1,7 @@
+version: '3.8'
+
 services:
+  # PostgreSQL контейнер
   postgres:
     image: postgres:16-alpine3.19
     restart: always
@@ -12,12 +15,28 @@ services:
     ports:
       - '127.0.0.1:5436:5432'
     healthcheck:
-      # this command checks if the database is ready, right on the source db server
       test: [ "CMD-SHELL", "pg_isready" ]
       interval: 5s
       timeout: 5s
       retries: 5
 
+  # Бэкенд контейнер (на Python)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: always
+    volumes:
+      - ./backend:/app
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/university
+    depends_on:
+      - postgres
+    ports:
+      - '127.0.0.1:8000:8000'
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
 volumes:
   db_data:
