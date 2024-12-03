@@ -1,20 +1,15 @@
-# 1. Указываем базовый образ Python
-FROM python:3.10-slim
-
-# 2. Устанавливаем рабочую директорию
+FROM python:3.11.2-buster
+ENV DEBIAN_FRONTEND='noninteractive'
+RUN apt-get update && apt install -y curl libsm6 libxext6 ffmpeg libfontconfig1 libxrender1 libgl1-mesa-glx
+RUN curl -sSL https://install.python-poetry.org | python
+ENV PATH="${PATH}:/root/.local/bin"
+COPY ./src /app/src
+COPY migration /app/migration
+COPY alembic.ini /app/
+COPY pyproject.toml /app/
+ENV PYTHONPATH /app/src
 WORKDIR /app
-
-# 3. Копируем файл с зависимостями в контейнер
-COPY requirements.txt .
-
-# 4. Устанавливаем зависимости через pip
-RUN pip install --no-cache-dir -r requirements.txt
-
-# 5. Копируем остальные файлы проекта в контейнер
-COPY . .
-
-# 6. Открываем порт 8000 для FastAPI
+RUN poetry config virtualenvs.create false \
+    && poetry install --no-root
+RUN chmod +x ./src/start.sh
 EXPOSE 8000
-
-# 7. Запускаем приложение с использованием uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

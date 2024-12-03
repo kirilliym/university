@@ -1,24 +1,28 @@
+import logging
+
 from fastapi import FastAPI, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer  # Добавьте этот импорт
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from pydantic import BaseModel
-from models import User, Base
-from config import get_session, engine
+from backend.src.models.user import User, Base
+from backend.src.config import get_session, engine
 from fastapi.middleware.cors import CORSMiddleware
 
 
 
+
+logger = logging.getLogger(__name__)
 app = FastAPI()
 
 
 # проблема с CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5500"],
+    allow_origins="*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -59,9 +63,9 @@ def verify_password(plain_password, hashed_password):
 def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -89,7 +93,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
     return user
 
 # получение пользователя по логину
-async def get_user_by_login(db: AsyncSession, login: str):
+async def get_user_by_login(db: AsyncSession, login: str) -> dict:
     query = select(User).filter(User.login == login)
     result = await db.execute(query)
     return result.scalars().first()
@@ -105,7 +109,7 @@ async def startup():
 async def register(user_data: UserCreate, db: AsyncSession = Depends(get_session)):
     user = await get_user_by_login(db, user_data.login)
     if user:
-        raise HTTPException(status_code=400, detail="Пользователь уже существует")
+        raise HTTPException(status_code=409, detail="Пользователь уже существует")
 
     hashed_password = get_password_hash(user_data.password)
     new_user = User(login=user_data.login, hashed_password=hashed_password)
