@@ -1,8 +1,14 @@
+import os
+
 from pydantic_settings import BaseSettings
 from pydantic import SecretStr
 
 
 class Settings(BaseSettings):
+    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "d966aeeb45d5a75e2c2267522d572e1e1d3bbbee3b56098190064e57555bfc25")
+    JWT_ALGORITHM: str = "HS256"
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+
     ORIGINS: str = "*"
     ROOT_PATH: str = ""
     ENV: str = "DEV"

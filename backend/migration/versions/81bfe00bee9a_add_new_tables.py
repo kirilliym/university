@@ -38,5 +38,5 @@ def upgrade():
 
 
 def downgrade():
-    op.drop_table('user_marks', schema=settings.POSTGRES_SCHEMA)
-    op.drop_table('studies', schema=settings.POSTGRES_SCHEMA)
+    op.drop_table('user_marks', schema=settings.POSTGRES_SCHEMA, cascade=True)
+    op.drop_table('studies', schema=settings.POSTGRES_SCHEMA, cascade=True)

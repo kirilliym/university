@@ -28,6 +28,7 @@ services:
     image: fastapi_app
     volumes:
       - ./src:/app/src
+      - ./migration:/app/migration
     env_file:
       - .env
     networks:

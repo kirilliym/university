@@ -4,99 +4,47 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text, select, insert, update, delete
 from sqlalchemy.exc import IntegrityError
 
-from project.schemas.user import UserSchema, UserCreateUpdateSchema
+from project.instances.user import UserResponse, UserAuth
 from project.infrastructure.postgres.models import User
-
 from project.core.exceptions import UserNotFound, UserAlreadyExists
 
 
 class UserRepository:
     _collection: Type[User] = User
 
-    async def check_connection(
-        self,
-        session: AsyncSession,
-    ) -> bool:
+    async def check_connection(self, session: AsyncSession) -> bool:
         query = "select 1;"
-
         result = await session.scalar(text(query))
-
         return True if result else False
 
-    async def get_all_users(
+################################################################################################
+
+    async def get_user_by_login(
         self,
         session: AsyncSession,
-    ) -> list[UserSchema]:
-        query = select(self._collection)
-
-        users = await session.scalars(query)
-
-        return [UserSchema.model_validate(obj=user) for user in users.all()]
-
-    async def get_user_by_id(
-        self,
-        session: AsyncSession,
-        user_id: int,
-    ) -> UserSchema:
-        query = (
-            select(self._collection)
-            .where(self._collection.id == user_id)
-        )
-
+        login: str,
+    ) -> User:
+        query = select(self._collection).where(self._collection.login == login)
         user = await session.scalar(query)
 
         if not user:
-            raise UserNotFound(_id=user_id)
+            raise UserNotFound(_id=-1)
 
-        return UserSchema.model_validate(obj=user)
+        return user
 
-    async def create_user(
-        self,
-        session: AsyncSession,
-        user: UserCreateUpdateSchema,
-    ) -> UserSchema:
+
+################################################################################################
+
+    async def create_user(self, session: AsyncSession, user: UserAuth) -> None:
         query = (
             insert(self._collection)
             .values(user.model_dump())
             .returning(self._collection)
         )
-
         try:
-            created_user = await session.scalar(query)
-            await session.flush()
+            # Выполняем запрос, но не используем результат
+            await session.execute(query)
+            await session.commit()  # Подтверждаем изменения в базе данных
         except IntegrityError:
-            raise UserAlreadyExists(email=user.email)
-
-        return UserSchema.model_validate(obj=created_user)
-
-    async def update_user(
-        self,
-        session: AsyncSession,
-        user_id: int,
-        user: UserCreateUpdateSchema,
-    ) -> UserSchema:
-        query = (
-            update(self._collection)
-            .where(self._collection.id == user_id)
-            .values(user.model_dump())
-            .returning(self._collection)
-        )
-
-        updated_user = await session.scalar(query)
-
-        if not updated_user:
-            raise UserNotFound(_id=user_id)
-
-        return UserSchema.model_validate(obj=updated_user)
-
-    async def delete_user(
-        self,
-        session: AsyncSession,
-        user_id: int
-    ) -> None:
-        query = delete(self._collection).where(self._collection.id == user_id)
-
-        result = await session.execute(query)
-
-        if not result.rowcount:
-            raise UserNotFound(_id=user_id)
+            # Если пользователь с таким логином уже существует, выбрасываем исключение
+            raise UserAlreadyExists(login=user.login)
