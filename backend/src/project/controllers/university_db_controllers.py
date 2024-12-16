@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 
+from project.controllers.depences import get_user_from_token, check_for_admin_permissions
 from project.core.university_db_exeptions import (
     ProfessorNotFound, ProfessorAlreadyExists,
     FaculteNotFound, FaculteAlreadyExists,
@@ -43,14 +44,27 @@ from project.instances.university_db_instances import (
     GradeInstance, GradeCreateUpdateInstance,
     SubjectInStudyInstance, SubjectInStudyCreateUpdateInstance
 )
+from project.instances.user import UserResponse
 
-university_db_router = APIRouter()
 
+professor_router = APIRouter()
+faculte_router = APIRouter()
+direction_router = APIRouter()
+grop_router = APIRouter()
+kafedra_router = APIRouter()
+subject_router = APIRouter()
+student_router = APIRouter()
+study_plan_router = APIRouter()
+nagruzka_router = APIRouter()
+exam_router = APIRouter()
+grade_router = APIRouter()
+subject_in_study_router = APIRouter()
 
-@university_db_router.get(
+@professor_router.get(
     "/all_professors",
     response_model=list[ProfessorInstance],
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def get_all_professors() -> list[ProfessorInstance]:
     async with database.session() as session:
@@ -59,10 +73,11 @@ async def get_all_professors() -> list[ProfessorInstance]:
     return all_professors
 
 
-@university_db_router.get(
+@professor_router.get(
     "/professor/{professor_id}",
     response_model=ProfessorInstance,
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def get_professor_by_id(
     professor_id: int,
@@ -76,14 +91,16 @@ async def get_professor_by_id(
     return professor
 
 
-@university_db_router.post(
+@professor_router.post(
     "/add_professor",
     response_model=ProfessorInstance,
     status_code=status.HTTP_201_CREATED,
 )
 async def add_professor(
     professor_dto: ProfessorCreateUpdateInstance,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> ProfessorInstance:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             new_professor = await professor_repo.create_professor(session=session, professor=professor_dto)
@@ -93,7 +110,7 @@ async def add_professor(
     return new_professor
 
 
-@university_db_router.put(
+@professor_router.put(
     "/update_professor/{professor_id}",
     response_model=ProfessorInstance,
     status_code=status.HTTP_200_OK,
@@ -101,7 +118,9 @@ async def add_professor(
 async def update_professor(
     professor_id: int,
     professor_dto: ProfessorCreateUpdateInstance,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> ProfessorInstance:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             updated_professor = await professor_repo.update_professor(
@@ -115,13 +134,15 @@ async def update_professor(
     return updated_professor
 
 
-@university_db_router.delete(
+@professor_router.delete(
     "/delete_professor/{professor_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_professor(
     professor_id: int,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> None:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             await professor_repo.delete_professor(session=session, professor_id=professor_id)
@@ -132,10 +153,12 @@ async def delete_professor(
 
 
 
-@university_db_router.get(
+
+@faculte_router.get(
     "/all_facultes",
     response_model=list[FaculteInstance],
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def get_all_facultes() -> list[FaculteInstance]:
     async with database.session() as session:
@@ -144,10 +167,11 @@ async def get_all_facultes() -> list[FaculteInstance]:
     return all_facultes
 
 
-@university_db_router.get(
+@faculte_router.get(
     "/faculte/{faculte_id}",
     response_model=FaculteInstance,
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def get_faculte_by_id(
     faculte_id: int,
@@ -161,14 +185,17 @@ async def get_faculte_by_id(
     return faculte
 
 
-@university_db_router.post(
+@faculte_router.post(
     "/add_faculte",
     response_model=FaculteInstance,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def add_faculte(
     faculte_dto: FaculteCreateUpdateInstance,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> FaculteInstance:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             new_faculte = await faculte_repo.create_faculte(session=session, faculte=faculte_dto)
@@ -178,15 +205,18 @@ async def add_faculte(
     return new_faculte
 
 
-@university_db_router.put(
+@faculte_router.put(
     "/update_faculte/{faculte_id}",
     response_model=FaculteInstance,
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def update_faculte(
     faculte_id: int,
     faculte_dto: FaculteCreateUpdateInstance,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> FaculteInstance:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             updated_faculte = await faculte_repo.update_faculte(
@@ -200,13 +230,16 @@ async def update_faculte(
     return updated_faculte
 
 
-@university_db_router.delete(
+@faculte_router.delete(
     "/delete_faculte/{faculte_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def delete_faculte(
     faculte_id: int,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> None:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             await faculte_repo.delete_faculte(session=session, faculte_id=faculte_id)
@@ -218,10 +251,13 @@ async def delete_faculte(
 
 
 
-@university_db_router.get(
+
+
+@kafedra_router.get(
     "/all_kafedras",
     response_model=list[KafedraInstance],
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def get_all_kafedras() -> list[KafedraInstance]:
     async with database.session() as session:
@@ -230,10 +266,11 @@ async def get_all_kafedras() -> list[KafedraInstance]:
     return all_kafedras
 
 
-@university_db_router.get(
+@kafedra_router.get(
     "/kafedra/{kafedra_id}",
     response_model=KafedraInstance,
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def get_kafedra_by_id(
     kafedra_id: int,
@@ -247,14 +284,17 @@ async def get_kafedra_by_id(
     return kafedra
 
 
-@university_db_router.post(
+@kafedra_router.post(
     "/add_kafedra",
     response_model=KafedraInstance,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def add_kafedra(
     kafedra_dto: KafedraCreateUpdateInstance,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> KafedraInstance:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             new_kafedra = await kafedra_repo.create_kafedra(session=session, kafedra=kafedra_dto)
@@ -264,15 +304,18 @@ async def add_kafedra(
     return new_kafedra
 
 
-@university_db_router.put(
+@kafedra_router.put(
     "/update_kafedra/{kafedra_id}",
     response_model=KafedraInstance,
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def update_kafedra(
     kafedra_id: int,
     kafedra_dto: KafedraCreateUpdateInstance,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> KafedraInstance:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             updated_kafedra = await kafedra_repo.update_kafedra(
@@ -286,13 +329,16 @@ async def update_kafedra(
     return updated_kafedra
 
 
-@university_db_router.delete(
+@kafedra_router.delete(
     "/delete_kafedra/{kafedra_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def delete_kafedra(
     kafedra_id: int,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> None:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             await kafedra_repo.delete_kafedra(session=session, kafedra_id=kafedra_id)
@@ -302,13 +348,11 @@ async def delete_kafedra(
     return {"detail": "Kafedra deleted successfully"}
 
 
-
-
-
-@university_db_router.get(
+@direction_router.get(
     "/all_directions",
     response_model=list[DirectionInstance],
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def get_all_directions() -> list[DirectionInstance]:
     async with database.session() as session:
@@ -317,10 +361,11 @@ async def get_all_directions() -> list[DirectionInstance]:
     return all_directions
 
 
-@university_db_router.get(
+@direction_router.get(
     "/direction/{direction_id}",
     response_model=DirectionInstance,
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def get_direction_by_id(
     direction_id: int,
@@ -334,14 +379,17 @@ async def get_direction_by_id(
     return direction
 
 
-@university_db_router.post(
+@direction_router.post(
     "/add_direction",
     response_model=DirectionInstance,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def add_direction(
     direction_dto: DirectionCreateUpdateInstance,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> DirectionInstance:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             new_direction = await direction_repo.create_direction(session=session, direction=direction_dto)
@@ -351,15 +399,18 @@ async def add_direction(
     return new_direction
 
 
-@university_db_router.put(
+@direction_router.put(
     "/update_direction/{direction_id}",
     response_model=DirectionInstance,
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def update_direction(
     direction_id: int,
     direction_dto: DirectionCreateUpdateInstance,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> DirectionInstance:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             updated_direction = await direction_repo.update_direction(
@@ -373,13 +424,16 @@ async def update_direction(
     return updated_direction
 
 
-@university_db_router.delete(
+@direction_router.delete(
     "/delete_direction/{direction_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def delete_direction(
     direction_id: int,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> None:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             await direction_repo.delete_direction(session=session, direction_id=direction_id)
@@ -389,13 +443,11 @@ async def delete_direction(
     return {"detail": "Direction deleted successfully"}
 
 
-
-
-
-@university_db_router.get(
+@grop_router.get(
     "/all_groups",
     response_model=list[GropInstance],
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def get_all_groups() -> list[GropInstance]:
     async with database.session() as session:
@@ -404,10 +456,11 @@ async def get_all_groups() -> list[GropInstance]:
     return all_groups
 
 
-@university_db_router.get(
+@grop_router.get(
     "/group/{group_id}",
     response_model=GropInstance,
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def get_group_by_id(
     group_id: int,
@@ -421,14 +474,17 @@ async def get_group_by_id(
     return grop
 
 
-@university_db_router.post(
+@grop_router.post(
     "/add_group",
     response_model=GropInstance,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def add_group(
     grop_dto: GropCreateUpdateInstance,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> GropInstance:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             new_grop = await grop_repo.create_group(session=session, grop=grop_dto)
@@ -438,15 +494,18 @@ async def add_group(
     return new_grop
 
 
-@university_db_router.put(
+@grop_router.put(
     "/update_group/{group_id}",
     response_model=GropInstance,
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def update_group(
     group_id: int,
     grop_dto: GropCreateUpdateInstance,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> GropInstance:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             updated_grop = await grop_repo.update_group(
@@ -460,13 +519,16 @@ async def update_group(
     return updated_grop
 
 
-@university_db_router.delete(
+@grop_router.delete(
     "/delete_group/{group_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def delete_group(
     group_id: int,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> None:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             await grop_repo.delete_group(session=session, group_id=group_id)
@@ -478,56 +540,52 @@ async def delete_group(
 
 
 
-
-
-
-@university_db_router.get(
+@study_plan_router.get(
     "/all_study_plans",
     response_model=list[StudyPlanInstance],
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def get_all_study_plans() -> list[StudyPlanInstance]:
     async with database.session() as session:
         all_study_plans = await study_plan_repo.get_all_study_plans(session=session)
-
     return all_study_plans
 
 
-@university_db_router.get(
+@study_plan_router.get(
     "/study_plan/{study_plan_id}",
     response_model=StudyPlanInstance,
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_token)],
 )
-async def get_study_plan_by_id(
-    study_plan_id: int,
-) -> StudyPlanInstance:
+async def get_study_plan_by_id(study_plan_id: int) -> StudyPlanInstance:
     try:
         async with database.session() as session:
             study_plan = await study_plan_repo.get_study_plan_by_id(session=session, study_plan_id=study_plan_id)
     except StudyPlanNotFound as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error.message)
-
     return study_plan
 
 
-@university_db_router.post(
+@study_plan_router.post(
     "/add_study_plan",
     response_model=StudyPlanInstance,
     status_code=status.HTTP_201_CREATED,
 )
 async def add_study_plan(
     study_plan_dto: StudyPlanCreateUpdateInstance,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> StudyPlanInstance:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             new_study_plan = await study_plan_repo.create_study_plan(session=session, study_plan=study_plan_dto)
     except StudyPlanAlreadyExists as error:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=error.message)
-
     return new_study_plan
 
 
-@university_db_router.put(
+@study_plan_router.put(
     "/update_study_plan/{study_plan_id}",
     response_model=StudyPlanInstance,
     status_code=status.HTTP_200_OK,
@@ -535,7 +593,9 @@ async def add_study_plan(
 async def update_study_plan(
     study_plan_id: int,
     study_plan_dto: StudyPlanCreateUpdateInstance,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> StudyPlanInstance:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             updated_study_plan = await study_plan_repo.update_study_plan(
@@ -545,74 +605,73 @@ async def update_study_plan(
             )
     except StudyPlanNotFound as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error.message)
-
     return updated_study_plan
 
 
-@university_db_router.delete(
+@study_plan_router.delete(
     "/delete_study_plan/{study_plan_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_study_plan(
     study_plan_id: int,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> None:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             await study_plan_repo.delete_study_plan(session=session, study_plan_id=study_plan_id)
     except StudyPlanNotFound as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error.message)
-
     return {"detail": "Study plan deleted successfully"}
 
 
 
-@university_db_router.get(
+@subject_router.get(
     "/all_subjects",
     response_model=list[SubjectInstance],
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def get_all_subjects() -> list[SubjectInstance]:
     async with database.session() as session:
         all_subjects = await subject_repo.get_all_subjects(session=session)
-
     return all_subjects
 
 
-@university_db_router.get(
+@subject_router.get(
     "/subject/{subject_id}",
     response_model=SubjectInstance,
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_token)],
 )
-async def get_subject_by_id(
-    subject_id: int,
-) -> SubjectInstance:
+async def get_subject_by_id(subject_id: int) -> SubjectInstance:
     try:
         async with database.session() as session:
             subject = await subject_repo.get_subject_by_id(session=session, subject_id=subject_id)
     except SubjectNotFound as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error.message)
-
     return subject
 
 
-@university_db_router.post(
+@subject_router.post(
     "/add_subject",
     response_model=SubjectInstance,
     status_code=status.HTTP_201_CREATED,
 )
 async def add_subject(
     subject_dto: SubjectCreateUpdateInstance,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> SubjectInstance:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             new_subject = await subject_repo.create_subject(session=session, subject=subject_dto)
     except SubjectAlreadyExists as error:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=error.message)
-
     return new_subject
 
 
-@university_db_router.put(
+@subject_router.put(
     "/update_subject/{subject_id}",
     response_model=SubjectInstance,
     status_code=status.HTTP_200_OK,
@@ -620,7 +679,9 @@ async def add_subject(
 async def update_subject(
     subject_id: int,
     subject_dto: SubjectCreateUpdateInstance,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> SubjectInstance:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             updated_subject = await subject_repo.update_subject(
@@ -630,77 +691,72 @@ async def update_subject(
             )
     except SubjectNotFound as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error.message)
-
     return updated_subject
 
 
-@university_db_router.delete(
+@subject_router.delete(
     "/delete_subject/{subject_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_subject(
     subject_id: int,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> None:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             await subject_repo.delete_subject(session=session, subject_id=subject_id)
     except SubjectNotFound as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error.message)
-
     return {"detail": "Subject deleted successfully"}
 
 
-
-
-
-
-@university_db_router.get(
+@student_router.get(
     "/all_students",
     response_model=list[StudentInstance],
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def get_all_students() -> list[StudentInstance]:
     async with database.session() as session:
         all_students = await student_repo.get_all_students(session=session)
-
     return all_students
 
 
-@university_db_router.get(
+@student_router.get(
     "/student/{student_id}",
     response_model=StudentInstance,
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_token)],
 )
-async def get_student_by_id(
-    student_id: int,
-) -> StudentInstance:
+async def get_student_by_id(student_id: int) -> StudentInstance:
     try:
         async with database.session() as session:
             student = await student_repo.get_student_by_id(session=session, student_id=student_id)
     except StudentNotFound as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error.message)
-
     return student
 
 
-@university_db_router.post(
+@student_router.post(
     "/add_student",
     response_model=StudentInstance,
     status_code=status.HTTP_201_CREATED,
 )
 async def add_student(
     student_dto: StudentCreateUpdateInstance,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> StudentInstance:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             new_student = await student_repo.create_student(session=session, student=student_dto)
     except StudentAlreadyExists as error:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=error.message)
-
     return new_student
 
 
-@university_db_router.put(
+@student_router.put(
     "/update_student/{student_id}",
     response_model=StudentInstance,
     status_code=status.HTTP_200_OK,
@@ -708,7 +764,9 @@ async def add_student(
 async def update_student(
     student_id: int,
     student_dto: StudentCreateUpdateInstance,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> StudentInstance:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             updated_student = await student_repo.update_student(
@@ -718,78 +776,73 @@ async def update_student(
             )
     except StudentNotFound as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error.message)
-
     return updated_student
 
 
-@university_db_router.delete(
+@student_router.delete(
     "/delete_student/{student_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_student(
     student_id: int,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> None:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             await student_repo.delete_student(session=session, student_id=student_id)
     except StudentNotFound as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error.message)
-
     return {"detail": "Student deleted successfully"}
 
 
-
-
-
-
-
-@university_db_router.get(
+# Nagruzka routes
+@nagruzka_router.get(
     "/all_nagruzka",
     response_model=list[NagruzkaInstance],
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def get_all_nagruzka() -> list[NagruzkaInstance]:
     async with database.session() as session:
         all_nagruzka = await nagruzka_repo.get_all_nagruzka(session=session)
-
     return all_nagruzka
 
 
-@university_db_router.get(
+@nagruzka_router.get(
     "/nagruzka/{nagruzka_id}",
     response_model=NagruzkaInstance,
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_token)],
 )
-async def get_nagruzka_by_id(
-    nagruzka_id: int,
-) -> NagruzkaInstance:
+async def get_nagruzka_by_id(nagruzka_id: int) -> NagruzkaInstance:
     try:
         async with database.session() as session:
             nagruzka = await nagruzka_repo.get_nagruzka_by_id(session=session, nagruzka_id=nagruzka_id)
     except NagruzkaNotFound as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error.message)
-
     return nagruzka
 
 
-@university_db_router.post(
+@nagruzka_router.post(
     "/add_nagruzka",
     response_model=NagruzkaInstance,
     status_code=status.HTTP_201_CREATED,
 )
 async def add_nagruzka(
     nagruzka_dto: NagruzkaCreateUpdateInstance,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> NagruzkaInstance:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             new_nagruzka = await nagruzka_repo.create_nagruzka(session=session, nagruzka=nagruzka_dto)
     except NagruzkaAlreadyExists as error:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=error.message)
-
     return new_nagruzka
 
 
-@university_db_router.put(
+@nagruzka_router.put(
     "/update_nagruzka/{nagruzka_id}",
     response_model=NagruzkaInstance,
     status_code=status.HTTP_200_OK,
@@ -797,7 +850,9 @@ async def add_nagruzka(
 async def update_nagruzka(
     nagruzka_id: int,
     nagruzka_dto: NagruzkaCreateUpdateInstance,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> NagruzkaInstance:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             updated_nagruzka = await nagruzka_repo.update_nagruzka(
@@ -807,76 +862,74 @@ async def update_nagruzka(
             )
     except NagruzkaNotFound as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error.message)
-
     return updated_nagruzka
 
 
-@university_db_router.delete(
+@nagruzka_router.delete(
     "/delete_nagruzka/{nagruzka_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_nagruzka(
     nagruzka_id: int,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> None:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             await nagruzka_repo.delete_nagruzka(session=session, nagruzka_id=nagruzka_id)
     except NagruzkaNotFound as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error.message)
-
     return {"detail": "Nagruzka deleted successfully"}
 
 
 
 
-
-@university_db_router.get(
+@exam_router.get(
     "/all_exams",
     response_model=list[ExamInstance],
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def get_all_exams() -> list[ExamInstance]:
     async with database.session() as session:
         all_exams = await exam_repo.get_all_exams(session=session)
-
     return all_exams
 
 
-@university_db_router.get(
+@exam_router.get(
     "/exam/{exam_id}",
     response_model=ExamInstance,
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_token)],
 )
-async def get_exam_by_id(
-    exam_id: int,
-) -> ExamInstance:
+async def get_exam_by_id(exam_id: int) -> ExamInstance:
     try:
         async with database.session() as session:
             exam = await exam_repo.get_exam_by_id(session=session, exam_id=exam_id)
     except ExamNotFound as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error.message)
-
     return exam
 
 
-@university_db_router.post(
+@exam_router.post(
     "/add_exam",
     response_model=ExamInstance,
     status_code=status.HTTP_201_CREATED,
 )
 async def add_exam(
     exam_dto: ExamCreateUpdateInstance,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> ExamInstance:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             new_exam = await exam_repo.create_exam(session=session, exam=exam_dto)
     except ExamAlreadyExists as error:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=error.message)
-
     return new_exam
 
 
-@university_db_router.put(
+@exam_router.put(
     "/update_exam/{exam_id}",
     response_model=ExamInstance,
     status_code=status.HTTP_200_OK,
@@ -884,7 +937,9 @@ async def add_exam(
 async def update_exam(
     exam_id: int,
     exam_dto: ExamCreateUpdateInstance,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> ExamInstance:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             updated_exam = await exam_repo.update_exam(
@@ -894,75 +949,73 @@ async def update_exam(
             )
     except ExamNotFound as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error.message)
-
     return updated_exam
 
 
-@university_db_router.delete(
+@exam_router.delete(
     "/delete_exam/{exam_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_exam(
     exam_id: int,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> None:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             await exam_repo.delete_exam(session=session, exam_id=exam_id)
     except ExamNotFound as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error.message)
-
     return {"detail": "Exam deleted successfully"}
 
 
-
-
-@university_db_router.get(
+# Grade routes
+@grade_router.get(
     "/all_grades",
     response_model=list[GradeInstance],
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def get_all_grades() -> list[GradeInstance]:
     async with database.session() as session:
         all_grades = await grade_repo.get_all_grades(session=session)
-
     return all_grades
 
 
-@university_db_router.get(
+@grade_router.get(
     "/grade/{grade_id}",
     response_model=GradeInstance,
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_token)],
 )
-async def get_grade_by_id(
-    grade_id: int,
-) -> GradeInstance:
+async def get_grade_by_id(grade_id: int) -> GradeInstance:
     try:
         async with database.session() as session:
             grade = await grade_repo.get_grade_by_id(session=session, grade_id=grade_id)
     except GradeNotFound as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error.message)
-
     return grade
 
 
-@university_db_router.post(
+@grade_router.post(
     "/add_grade",
     response_model=GradeInstance,
     status_code=status.HTTP_201_CREATED,
 )
 async def add_grade(
     grade_dto: GradeCreateUpdateInstance,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> GradeInstance:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             new_grade = await grade_repo.create_grade(session=session, grade=grade_dto)
     except GradeAlreadyExists as error:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=error.message)
-
     return new_grade
 
 
-@university_db_router.put(
+@grade_router.put(
     "/update_grade/{grade_id}",
     response_model=GradeInstance,
     status_code=status.HTTP_200_OK,
@@ -970,7 +1023,9 @@ async def add_grade(
 async def update_grade(
     grade_id: int,
     grade_dto: GradeCreateUpdateInstance,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> GradeInstance:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             updated_grade = await grade_repo.update_grade(
@@ -980,76 +1035,73 @@ async def update_grade(
             )
     except GradeNotFound as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error.message)
-
     return updated_grade
 
 
-@university_db_router.delete(
+@grade_router.delete(
     "/delete_grade/{grade_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_grade(
     grade_id: int,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> None:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             await grade_repo.delete_grade(session=session, grade_id=grade_id)
     except GradeNotFound as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error.message)
-
     return {"detail": "Grade deleted successfully"}
 
 
-
-
-
-@university_db_router.get(
+# Subject in study routes
+@subject_in_study_router.get(
     "/all_subject_in_study",
     response_model=list[SubjectInStudyInstance],
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_token)],
 )
 async def get_all_subject_in_study() -> list[SubjectInStudyInstance]:
     async with database.session() as session:
         all_subject_in_study = await subject_in_study_repo.get_all_subject_in_study(session=session)
-
     return all_subject_in_study
 
 
-@university_db_router.get(
+@subject_in_study_router.get(
     "/subject_in_study/{subject_in_study_id}",
     response_model=SubjectInStudyInstance,
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_token)],
 )
-async def get_subject_in_study_by_id(
-    subject_in_study_id: int,
-) -> SubjectInStudyInstance:
+async def get_subject_in_study_by_id(subject_in_study_id: int) -> SubjectInStudyInstance:
     try:
         async with database.session() as session:
             subject_in_study = await subject_in_study_repo.get_subject_in_study_by_id(session=session, subject_in_study_id=subject_in_study_id)
     except SubjectInStudyNotFound as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error.message)
-
     return subject_in_study
 
 
-@university_db_router.post(
+@subject_in_study_router.post(
     "/add_subject_in_study",
     response_model=SubjectInStudyInstance,
     status_code=status.HTTP_201_CREATED,
 )
 async def add_subject_in_study(
     subject_in_study_dto: SubjectInStudyCreateUpdateInstance,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> SubjectInStudyInstance:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             new_subject_in_study = await subject_in_study_repo.create_subject_in_study(session=session, subject_in_study=subject_in_study_dto)
     except SubjectInStudyAlreadyExists as error:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=error.message)
-
     return new_subject_in_study
 
 
-@university_db_router.put(
+@subject_in_study_router.put(
     "/update_subject_in_study/{subject_in_study_id}",
     response_model=SubjectInStudyInstance,
     status_code=status.HTTP_200_OK,
@@ -1057,7 +1109,9 @@ async def add_subject_in_study(
 async def update_subject_in_study(
     subject_in_study_id: int,
     subject_in_study_dto: SubjectInStudyCreateUpdateInstance,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> SubjectInStudyInstance:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             updated_subject_in_study = await subject_in_study_repo.update_subject_in_study(
@@ -1067,21 +1121,21 @@ async def update_subject_in_study(
             )
     except SubjectInStudyNotFound as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error.message)
-
     return updated_subject_in_study
 
 
-@university_db_router.delete(
+@subject_in_study_router.delete(
     "/delete_subject_in_study/{subject_in_study_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_subject_in_study(
     subject_in_study_id: int,
+    current_user: UserResponse = Depends(get_user_from_token),
 ) -> None:
+    check_for_admin_permissions(user=current_user)
     try:
         async with database.session() as session:
             await subject_in_study_repo.delete_subject_in_study(session=session, subject_in_study_id=subject_in_study_id)
     except SubjectInStudyNotFound as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error.message)
-
     return {"detail": "SubjectInStudy deleted successfully"}
