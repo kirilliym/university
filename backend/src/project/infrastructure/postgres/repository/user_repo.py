@@ -27,9 +27,6 @@ class UserRepository:
         query = select(self._collection).where(self._collection.login == login)
         user = await session.scalar(query)
 
-        if not user:
-            raise UserNotFound(_id=-1)
-
         return user
 
 
@@ -42,9 +39,38 @@ class UserRepository:
             .returning(self._collection)
         )
         try:
-            # Выполняем запрос, но не используем результат
             await session.execute(query)
-            await session.commit()  # Подтверждаем изменения в базе данных
+            await session.commit()
         except IntegrityError:
-            # Если пользователь с таким логином уже существует, выбрасываем исключение
             raise UserAlreadyExists(login=user.login)
+        
+  ################################################################################################
+
+    async def is_admin(
+        self,
+        session: AsyncSession,
+        login: str,
+    ) -> bool:
+        query = select(self._collection.isadmin).where(self._collection.login == login)
+        result = await session.scalar(query)
+        if result is None:
+            raise UserNotFound(login=login)
+        return result
+
+    ################################################################################################
+
+    async def set_admin(
+        self,
+        session: AsyncSession,
+        login: str,
+        is_admin: bool = True,
+    ) -> None:
+        query = (
+            update(self._collection)
+            .where(self._collection.login == login)
+            .values(isadmin=is_admin)
+        )
+        result = await session.execute(query)
+        if result.rowcount == 0:
+            raise UserNotFound(_id=-1)
+        await session.commit()
